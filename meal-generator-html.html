@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generatore Pasti Nutrizionali</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #eff6ff;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1e3a8a;
+            margin-bottom: 0.75rem;
+        }
+        
+        .day-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .day-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .day-btn.active {
+            background: #2563eb;
+            color: white;
+        }
+        
+        .day-btn:not(.active) {
+            background: #bfdbfe;
+            color: #1e40af;
+        }
+        
+        .day-btn:hover:not(.active) {
+            background: #93c5fd;
+        }
+        
+        .generate-btn {
+            background: #16a34a;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .generate-btn:hover {
+            background: #15803d;
+        }
+        
+        .meals-grid {
+            display: grid;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+        
+        .meal-card {
+            background: #dbeafe;
+            border: 2px solid #bfdbfe;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+        }
+        
+        .meal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .meal-title-area {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .meal-title {
+            font-size: 1.125rem;
+            font-weight: bold;
+            color: #1e40af;
+        }
+        
+        .toggle-group {
+            display: flex;
+            background: #bfdbfe;
+            border-radius: 0.375rem;
+            padding: 0.125rem;
+        }
+        
+        .toggle-btn {
+            padding: 0.125rem 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .toggle-btn.active {
+            background: white;
+            color: #1e40af;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .toggle-btn:not(.active) {
+            background: transparent;
+            color: #2563eb;
+        }
+        
+        .meal-controls {
+            display: flex;
+            gap: 0.25rem;
+        }
+        
+        .control-btn {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .shuffle-btn {
+            background: #bfdbfe;
+            color: #1e40af;
+        }
+        
+        .shuffle-btn:hover {
+            background: #93c5fd;
+        }
+        
+        .food-item {
+            border-radius: 0.375rem;
+            padding: 0.5rem;
+            margin-bottom: 0.25rem;
+            border: 1px solid #bfdbfe;
+        }
+        
+        .food-item.normal {
+            background: #dbeafe;
+        }
+        
+        .food-item.multiple {
+            background: #bfdbfe;
+            border-color: #93c5fd;
+        }
+        
+        .food-item.composite {
+            background: linear-gradient(to right, #fed7aa, #fef3c7);
+            border-left: 4px solid #f97316;
+        }
+        
+        .food-content {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .food-main {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .food-amount {
+            width: 5rem;
+            flex-shrink: 0;
+        }
+        
+        .amount-text {
+            font-size: 0.875rem;
+            font-weight: bold;
+            color: #1d4ed8;
+        }
+        
+        .amount-note {
+            font-size: 0.625rem;
+            color: #ea580c;
+            margin-left: 0.25rem;
+        }
+        
+        .food-select {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .food-dropdown {
+            font-size: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.25rem;
+            padding: 0.25rem;
+            background: white;
+            width: 100%;
+        }
+        
+        .mode-toggle {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        
+        .mode-toggle.single {
+            background: #2563eb;
+            color: white;
+        }
+        
+        .mode-toggle.multiple {
+            background: #93c5fd;
+            color: #1e40af;
+        }
+        
+        .food-controls {
+            display: flex;
+            gap: 0.25rem;
+            flex-shrink: 0;
+        }
+        
+        .food-btn {
+            width: 1.25rem;
+            height: 1.25rem;
+            border: none;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: white;
+        }
+        
+        .btn-copy {
+            background: #3b82f6;
+        }
+        
+        .btn-copy:hover {
+            background: #2563eb;
+        }
+        
+        .btn-delete {
+            background: #ef4444;
+        }
+        
+        .btn-delete:hover {
+            background: #dc2626;
+        }
+        
+        .food-range {
+            font-size: 0.75rem;
+            color: #6b7280;
+            font-style: italic;
+            margin-top: 0.25rem;
+        }
+        
+        .meal-footer {
+            margin-top: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .meal-totals {
+            background: #bfdbfe;
+            border-radius: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+            display: flex;
+            gap: 0.75rem;
+        }
+        
+        .add-food-btn {
+            font-size: 0.75rem;
+            background: #2563eb;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+        }
+        
+        .add-food-btn:hover {
+            background: #1d4ed8;
+        }
+        
+        .meal-note {
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            font-style: italic;
+            font-weight: 500;
+        }
+        
+        .note-orange {
+            color: #c2410c;
+        }
+        
+        .note-blue {
+            color: #1d4ed8;
+        }
+        
+        .footer-spacer {
+            height: 4rem;
+        }
+        
+        .totals-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #111827;
+            color: white;
+            box-shadow: 0 -4px 6px rgba(0,0,0,0.1);
+            border-top: 4px solid #3b82f6;
+            z-index: 40;
+        }
+        
+        .totals-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .totals-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .totals-label h3 {
+            font-size: 1.125rem;
+            font-weight: bold;
+        }
+        
+        .totals-values {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .total-item {
+            text-align: center;
+        }
+        
+        .total-value {
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+        
+        .total-value.kcal {
+            color: #60a5fa;
+        }
+        
+        .total-value.carb {
+            color: #fbbf24;
+        }
+        
+        .total-value.prot {
+            color: #f87171;
+        }
+        
+        .total-value.fat {
+            color: #4ade80;
+        }
+        
+        .total-label {
+            font-size: 0.75rem;
+            color: #d1d5db;
+        }
+        
+        .progress-bar {
+            flex: 1;
+            max-width: 300px;
+            margin-left: 1rem;
+        }
+        
+        .progress-track {
+            width: 100%;
+            background: #374151;
+            border-radius: 0.375rem;
+            height: 0.75rem;
+        }
+        
+        .progress-fill {
+            height: 0.75rem;
+            border-radius: 0.375rem;
+            display: flex;
+        }
+        
+        .progress-carb {
+            background: #eab308;
+            border-top-left-radius: 0.375rem;
+            border-bottom-left-radius: 0.375rem;
+        }
+        
+        .progress-prot {
+            background: #ef4444;
+        }
+        
+        .progress-fat {
+            background: #22c55e;
+            border-top-right-radius: 0.375rem;
+            border-bottom-right-radius: 0.375rem;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .day-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .meals-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .totals-content {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .progress-bar {
+                margin-left: 0;
+                max-width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">Generatore Pasti Nutrizionali - NUOVO PIANO 🎯</h1>
+            
+            <div class="day-buttons">
+                <button class="day-btn active" data-day="riposo">Giorni di Riposo</button>
+                <button class="day-btn" data-day="camminata_settimana">Camminata Settimana</button>
+                <button class="day-btn" data-day="camminata_weekend">Camminata Weekend</button>
+            </div>
+            
+            <button class="generate-btn" onclick="generateRandomMeals()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M8 4L3 21"/>
+                </svg>
+                Genera Giornata
+            </button>
+        </div>
+
+        <div class="meals-grid" id="mealsGrid">
+            <!-- I pasti verranno generati qui dinamicamente -->
+        </div>
+
+        <div class="footer-spacer"></div>
+    </div>
+
+    <div class="totals-bar">
+        <div class="totals-content">
+            <div class="totals-label">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    <path d="M9 9h6v6H9z"/>
+                </svg>
+                <h3>Totali</h3>
+            </div>
+            
+            <div class="totals-values">
+                <div class="total-item">
+                    <div class="total-value kcal" id="totalKcal">0</div>
+                    <div class="total-label">kcal</div>
+                </div>
+                <div class="total-item">
+                    <div class="total-value carb" id="totalCarb">0g</div>
+                    <div class="total-label">C (<span id="carbPerc">0</span>%)</div>
+                </div>
+                <div class="total-item">
+                    <div class="total-value prot" id="totalProt">0g</div>
+                    <div class="total-label">P (<span id="protPerc">0</span>%)</div>
+                </div>
+                <div class="total-item">
+                    <div class="total-value fat" id="totalFat">0g</div>
+                    <div class="total-label">G (<span id="fatPerc">0</span>%)</div>
+                </div>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-track">
+                    <div class="progress-fill" id="progressFill">
+                        <div class="progress-carb" id="progressCarb"></div>
+                        <div class="progress-prot" id="progressProt"></div>
+                        <div class="progress-fat" id="progressFat"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Database nutrizionale
+        const nutritionDb = {
+            'proteine_polvere_30g': { kcal: 120, prot: 30.0, carb: 2.0, fat: 1.0, portion: 'proteine in polvere', unit: 'g' },
+            'proteine_polvere_40g': { kcal: 160, prot: 40.0, carb: 2.5, fat: 1.5, portion: 'proteine in polvere', unit: 'g' },
+            'latte_vegetale': { kcal: 25, prot: 1.0, carb: 3.0, fat: 1.0, portion: 'latte vegetale senza zuccheri', unit: 'ml' },
+            'wasa_5': { kcal: 175, prot: 5.0, carb: 35.0, fat: 1.7, portion: '5-6 wasa/gallette', unit: 'porzione', isRange: true, minAmount: 5, maxAmount: 6 },
+            'wasa_2': { kcal: 70, prot: 2.0, carb: 14.0, fat: 0.7, portion: '2 wasa/gallette', unit: 'porzione' },
+            'wasa_4': { kcal: 140, prot: 4.0, carb: 28.0, fat: 1.3, portion: '4 wasa/gallette', unit: 'porzione' },
+            'wasa_6': { kcal: 210, prot: 6.0, carb: 42.0, fat: 2.0, portion: '6 wasa/gallette', unit: 'porzione' },
+            'patate_mais_legumi_200': { kcal: 160, prot: 4.0, carb: 36.0, fat: 0.3, portion: 'patate/mais/legumi (COTTI)', unit: 'g', fixedAmount: 200 },
+            'panino_rosetta': { kcal: 200, prot: 6.0, carb: 42.0, fat: 1.5, portion: 'panino rosetta o 3 fette', unit: 'porzione' },
+            'wasa_2_frutta_1': { 
+                kcal: 150, prot: 3.0, carb: 32.0, fat: 0.7,
+                portion: '2 wasa + 1 frutta',
+                unit: 'porzione',
+                isComposite: true,
+                displayAmount: '2 wasa/gallette + 1 porzione frutta'
+            },
+            'riso_pasta_80': { kcal: 288, prot: 5.6, carb: 61.6, fat: 0.6, portion: 'riso/pasta/cereali', unit: 'g', minAmount: 80, maxAmount: 100, suggestedAmount: 90 },
+            'pane_5_fette': { kcal: 270, prot: 8.0, carb: 56.0, fat: 2.0, portion: 'pane 5-6 fette (2 panini)', unit: 'porzione' },
+            'gnocchi_200': { kcal: 300, prot: 8.0, carb: 60.0, fat: 2.0, portion: 'gnocchi di patate', unit: 'g', fixedAmount: 200 },
+            'carb_multipli_cena': {
+                kcal: 280, prot: 7.0, carb: 56.0, fat: 1.8,
+                portion: '2 portate carboidrati',
+                unit: 'porzione',
+                isComposite: true,
+                displayAmount: '2 a scelta: wasa/patate/pane/frutta'
+            },
+            'pesce_magro_pranzo': { kcal: 200, prot: 40.0, carb: 0, fat: 4.0, portion: 'pesce magro/gamberi', unit: 'g', minAmount: 200, maxAmount: 250, suggestedAmount: 225 },
+            'pesce_magro_cena': { kcal: 225, prot: 45.0, carb: 0, fat: 4.5, portion: 'pesce magro/gamberi', unit: 'g', minAmount: 200, maxAmount: 250, suggestedAmount: 225 },
+            'carne_magra_pranzo': { kcal: 266, prot: 40.0, carb: 0, fat: 10.6, portion: 'carne magra', unit: 'g', fixedAmount: 200 },
+            'carne_magra_cena': { kcal: 300, prot: 45.0, carb: 0, fat: 12.0, portion: 'carne magra', unit: 'g', minAmount: 200, maxAmount: 250, suggestedAmount: 225 },
+            'polpo_pranzo': { kcal: 190, prot: 39.0, carb: 3.0, fat: 2.5, portion: 'polpo/seppia/totani', unit: 'g', minAmount: 250, maxAmount: 300, suggestedAmount: 275 },
+            'polpo_cena': { kcal: 215, prot: 44.0, carb: 3.5, fat: 2.8, portion: 'polpo/seppia/totani', unit: 'g', minAmount: 250, maxAmount: 350, suggestedAmount: 300 },
+            'tonno_naturale': { kcal: 200, prot: 43.5, carb: 0, fat: 1.7, portion: 'tonno naturale/leggero', unit: 'g', fixedAmount: 150 },
+            'uova_3_4': { kcal: 310, prot: 26.0, carb: 2.0, fat: 22.0, portion: '3-4 uova', unit: 'porzione', minAmount: 3, maxAmount: 4, suggestedAmount: 3 },
+            'pesce_grasso_pranzo': { kcal: 295, prot: 32.0, carb: 0, fat: 17.0, portion: 'pesce grasso', unit: 'g', minAmount: 170, maxAmount: 200, suggestedAmount: 185, hasAsterisk: true },
+            'pesce_grasso_cena': { kcal: 295, prot: 32.0, carb: 0, fat: 17.0, portion: 'pesce grasso', unit: 'g', minAmount: 170, maxAmount: 200, suggestedAmount: 185, hasAsterisk: true },
+            'bresaola_pranzo': { kcal: 180, prot: 42.0, carb: 1.0, fat: 2.5, portion: 'bresaola/crudo/fesa', unit: 'g', minAmount: 110, maxAmount: 150, suggestedAmount: 130 },
+            'bresaola_cena': { kcal: 180, prot: 42.0, carb: 1.0, fat: 2.5, portion: 'bresaola/crudo/fesa', unit: 'g', minAmount: 110, maxAmount: 150, suggestedAmount: 130 },
+            'pesce_magro_weekend': { kcal: 165, prot: 33.0, carb: 0, fat: 3.3, portion: 'pesce magro/gamberi', unit: 'g', minAmount: 150, maxAmount: 180, suggestedAmount: 165 },
+            'carne_magra_weekend': { kcal: 175, prot: 25.0, carb: 0, fat: 7.5, portion: 'carne magra', unit: 'g', minAmount: 100, maxAmount: 150, suggestedAmount: 125 },
+            'uova_2_3': { kcal: 230, prot: 20.0, carb: 1.5, fat: 16.5, portion: '2-3 uova', unit: 'porzione', minAmount: 2, maxAmount: 3, suggestedAmount: 2 },
+            'pesce_grasso_weekend': { kcal: 205, prot: 23.0, carb: 0, fat: 12.0, portion: 'pesce grasso', unit: 'g', minAmount: 120, maxAmount: 130, suggestedAmount: 125, hasAsterisk: true },
+            'bresaola_weekend': { kcal: 135, prot: 32.0, carb: 0.8, fat: 1.8, portion: 'bresaola/crudo/fesa', unit: 'g', minAmount: 80, maxAmount: 100, suggestedAmount: 90 },
+            'frutta_secca_15': { kcal: 90, prot: 3.0, carb: 3.0, fat: 8.0, portion: 'frutta secca o cioccolato fondente', unit: 'g', minAmount: 15, maxAmount: 20, suggestedAmount: 17 },
+            'frutta_secca_20': { kcal: 120, prot: 4.0, carb: 4.0, fat: 10.6, portion: 'frutta secca o cioccolato fondente', unit: 'g', fixedAmount: 20 },
+            'frutta_secca_20_30': { kcal: 150, prot: 5.0, carb: 5.0, fat: 13.3, portion: 'frutta secca o cioccolato fondente', unit: 'g', minAmount: 20, maxAmount: 30, suggestedAmount: 25 },
+            'olio_evo': { kcal: 90, prot: 0, carb: 0, fat: 10.0, portion: 'olio extravergine', unit: 'g', fixedAmount: 10 },
+            'grana_30': { kcal: 117, prot: 10.2, carb: 0, fat: 8.7, portion: 'grana/emmenthal', unit: 'g', fixedAmount: 30 },
+            'grana_20_30': { kcal: 97, prot: 8.5, carb: 0, fat: 7.3, portion: 'grana/emmenthal', unit: 'g', minAmount: 20, maxAmount: 30, suggestedAmount: 25 },
+            'avocado_hummus': { kcal: 140, prot: 3.0, carb: 8.0, fat: 11.0, portion: 'avocado o hummus', unit: 'cucchiai', minAmount: 2, maxAmount: 3, suggestedAmount: 2, perPiece: 30 },
+            'olive_piccole': { kcal: 75, prot: 0.8, carb: 1.5, fat: 7.5, portion: 'olive piccole', unit: 'pz', minAmount: 15, maxAmount: 20, suggestedAmount: 17, perPiece: 5 },
+            'verdure_stagione': { kcal: 25, prot: 2.0, carb: 5.0, fat: 0.2, portion: 'verdure di stagione', unit: 'porzione', fixedAmount: 1 },
+            'frutta': { kcal: 80, prot: 1.0, carb: 18.0, fat: 0.3, portion: 'frutta', unit: 'porzioni', perPortion: 100 },
+            'frutta_2': { kcal: 160, prot: 2.0, carb: 36.0, fat: 0.6, portion: '2 porzioni frutta', unit: 'porzione' },
+            'mini_marmellatine': { kcal: 60, prot: 0.1, carb: 15.0, fat: 0, portion: '2 mini-marmellatine', unit: 'porzione' },
+            'fruttini_100g': { kcal: 60, prot: 0.1, carb: 15.0, fat: 0, portion: '2 fruttini da 100g', unit: 'porzione' },
+            'hydrafit_30g': { kcal: 110, prot: 0, carb: 27.0, fat: 0, portion: 'hydrafit', unit: 'g', fixedAmount: 30 },
+            'pane_weekend': { kcal: 220, prot: 6.5, carb: 46.0, fat: 1.6, portion: '2 panini (4 fette)', unit: 'porzione' },
+            'shaker_proteine': { 
+                kcal: 200, prot: 40.0, carb: 22.0, fat: 1.5,
+                portion: 'shaker proteine + banana',
+                unit: 'porzione',
+                isComposite: true,
+                displayAmount: '40g proteine + 1 banana'
+            },
+            'mix_frutta_secca': { kcal: 300, prot: 10.0, carb: 25.0, fat: 20.0, portion: 'mix frutta secca/essiccata', unit: 'g', fixedAmount: 50 }
+        };
+
+        // Configurazioni pasti per tipo di giornata
+        const mealConfigsByDayType = {
+            riposo: {
+                colazione: {
+                    proteine: [{ foodKey: 'proteine_polvere_30g', minAmount: 30, maxAmount: 40, suggestedAmount: 35 }],
+                    latte: [{ foodKey: 'latte_vegetale', minAmount: 300, maxAmount: 500, suggestedAmount: 400 }],
+                    grassi: [{ foodKey: 'frutta_secca_15', minAmount: 15, maxAmount: 20, suggestedAmount: 17 }]
+                },
+                pranzo: {
+                    carboidrati_single: [
+                        { foodKey: 'wasa_5', minAmount: 1, maxAmount: 1, suggestedAmount: 1 },
+                        { foodKey: 'patate_mais_legumi_200', minAmount: 1, maxAmount: 1, suggestedAmount: 1 },
+                        { foodKey: 'panino_rosetta', minAmount: 1, maxAmount: 1, suggestedAmount: 1 },
+                        { foodKey: 'wasa_2_frutta_1', minAmount: 1, maxAmount: 1, suggestedAmount: 1 }
+                    ],
+                    proteine: [
+                        { foodKey: 'pesce_magro_pranzo', minAmount: 200, maxAmount: 250, suggestedAmount: 225 },
+                        { foodKey: 'carne_magra_pranzo', minAmount: 1, maxAmount: 1, suggestedAmount: 1 },
+                        { foodKey: 'polpo_pranzo', minAmount: 250, maxAmount: 300, suggestedAmount: 275 },
+                        { foodKey: 'tonno_naturale', minAmount: 1, maxAmount: 1, suggestedAmount: 1 },
+                        { foodKey: 'uova_3_4', minAmount: 3, maxAmount: 4, suggestedAmount: 3 },
+                        { foodKey: 'pesce_grasso_pranzo', minAmount: 170, maxAmount: 200, suggestedAmount: 185 },
+                        { foodKey: 'bresaola_pranzo', minAmount: 110, maxAmount: 150, suggestedAmount: 130 }
+                    ],
+                    verdure: [{ foodKey: 'verdure_stagione', minAmount: 1, maxAmount: 1, suggestedAmount: 1 }],
+                    grassi: [
+                        { foodKey: 'olio_evo', minAmount: 1, maxAmount: 1, suggestedAmount: 1 },
+                        { foodKey: 'frutta_secca_20', minAmount: 1, maxAmount: 1, suggestedAmount: 1 },
+                        { foodKey: 'grana_30', minAmount: 1, maxAmount: 1, suggestedAmount: 1 },
+                        { foodKey: 'avocado_hummus', minAmount: 2, maxAmount: 3, suggestedAmount: 2 },
+                        { foodKey: 'olive_piccole', minAmount: 15, maxAmount: 20, suggestedAmount: 17 }
+                    ]
+                },
+                spuntino_pomeriggio: {
+                    portate: [
+                        { foodKey: 'frutta', minAmount: 1, maxAmount: 1, suggestedAmount: 1 },
+                        { foodKey: 'wasa_4', minAmount: 1, maxAmount: 1, suggestedAmount: 1 },
+                        { foodKey: 'frutta_secca_20_30', minAmount: 20, maxAmount: 30, suggestedAmount: 25 },
+                        { foodKey: 'grana_20_30', minAmount: 20, maxAmount: 30, suggestedAmount: 25 }
+                    ]
+                },
+                cena: {
+                    carboidrati_single: [
+                        { foodKey: 'riso_pasta_80', minAmount: 80, maxAmount: 100, suggestedAmount: 90 },
+                        { foodKey: 'pane_5_fette', minAmount: 1, maxAmount: 1, suggestedAmount: 1 },
+                        { foodKey: 'gnocchi_200', minAmount: 1, maxAmount: 1, suggestedAmount: 1 }
+                    ],
+                    carboidrati_multiple: [
+                        { foodKey: 'carb_multipli_cena', minAmount: 1, maxAmount: 1, suggestedAmount: 1 }
+                    ],
+                    proteine: [
+                        { foodKey: 'pesce_magro_cena', minAmount: 200, maxAmount: 250, suggestedAmount: 225 },
+                        { foodKey: 'carne_magra_cena', minAmount: 200, maxAmount: 250, suggestedAmount: 225 },
+                        { foodKey: 'polpo_cena', minAmount: 250, maxAmount: 350, suggestedAmount: 300 },
+                        { foodKey: 'tonno_naturale', minAmount: 1, maxAmount: 1, suggestedAmount: 1 },
+                        { foodKey: 'uova_3_4', minAmount: 3, maxAmount: 4, suggestedAmount: 3 },
+                        { foodKey: 'pesce_grasso_cena', minAmount: 170, maxAmount: 200, suggestedAmount: 185 },
+                        { foodKey: 'bresaola_cena', minAmount: 110, maxAmount: 150, suggestedAmount: 130 }
+                    ],
+                    verdure: [{ foodKey: 'verdure_stagione', minAmount: 1, maxAmount: 1, suggestedAmount: 1 }],
+                    grassi: [
+                        { foodKey: 'olio_evo', minAmount: 1, maxAmount: 1, suggestedAmount: 1 },
+                        { foodKey: 'frutta_secca_20', minAmount: 1, maxAmount: 1, suggestedAmount: 1 },
+                        { foodKey: 'grana_30', minAmount: 1, maxAmount: 1, suggestedAmount: 1 },
+                        { foodKey: 'avocado_hummus', minAmount: 2, maxAmount: 3, suggestedAmount: 2 },
+                        { foodKey: 'olive_piccole', minAmount: 15, maxAmount: 20, suggestedAmount: 17 }
+                    ]
+                }
+            },
+            camminata_settimana: {
+                pre_allenamento: {
+                    carboidrati: [
+                        { foodKey: 'mini_marmellatine', minAmount: 1, maxAmount: 1, suggestedAmount: 1 },
+                        { foodKey: 'fruttini_100g', minAmount: 1, maxAmount: 1, suggestedAmount: 1 }
+                    ]
+                }
+            },
+            camminata_weekend: {
+                pre_allenamento: {
+                    carboidrati: [{ foodKey: 'mini_marmellatine', minAmount: 1, maxAmount: 1, suggestedAmount: 1 }]
+                },
+                durante_allenamento: {
+                    carboidrati: [
+                        { foodKey: 'mini_marmellatine', minAmount: 1, maxAmount: 1, suggestedAmount: 1 },
+                        { foodKey: 'hydrafit_30g', minAmount: 1, maxAmount: 1, suggestedAmount: 1 }
+                    ]
+                },
+                pranzo_principale: {
+                    carboidrati: [{ foodKey: 'pane_weekend', minAmount: 1, maxAmount: 1, suggestedAmount: 1 }],
+                    proteine: [
+                        { foodKey: 'pesce_magro_weekend', minAmount: 150, maxAmount: 180, suggestedAmount: 165 },
+                        { foodKey: 'carne_magra_weekend', minAmount: 100, maxAmount: 150, suggestedAmount: 125 },
+                        { foodKey: 'uova_2_3', minAmount: 2, maxAmount: 3, suggestedAmount: 2 },
+                        { foodKey: 'pesce_grasso_weekend', minAmount: 120, maxAmount: 130, suggestedAmount: 125 },
+                        { foodKey: 'bresaola_weekend', minAmount: 80, maxAmount: 100, suggestedAmount: 90 }
+                    ],
+                    grassi: [
+                        { foodKey: 'olio_evo', minAmount: 1, maxAmount: 1, suggestedAmount: 1 },
+                        { foodKey: 'frutta_secca_20_30', minAmount: 20, maxAmount: 30, suggestedAmount: 25 },
+                        { foodKey: 'grana_30', minAmount: 1, maxAmount: 1, suggestedAmount: 1 }
+                    ]
+                },
+                pranzo_alternativo: {
+                    shaker: [{ foodKey: 'shaker_proteine', minAmount: 1, maxAmount: 1, suggestedAmount: 1 }],
+                    mix: [{ foodKey: 'mix_frutta_secca', minAmount: 1, maxAmount: 1, suggestedAmount: 1 }]
+                },
+                pre_cena: {
+                    portate: [
+                        { foodKey: 'frutta', minAmount: 1, maxAmount: 1, suggestedAmount: 1 },
+                        { foodKey: 'wasa_4', minAmount: 1, maxAmount: 1, suggestedAmount: 1 },
+                        { foodKey: 'frutta_secca_20_30', minAmount: 20, maxAmount: 30, suggestedAmount: 25 },
+                        { foodKey: 'grana_20_30', minAmount: 20, maxAmount: 30, suggestedAmount: 25 }
+                    ]
+                }
+            }
+        };
+
+        // Stato dell'applicazione
+        let currentDayType = 'riposo';
+        let currentLunchMode = 'principale';
+        let meals = {};
+        let totals = { kcal: 0, carb: 0, prot: 0, fat: 0 };
+
+        // Funzioni di utilità
+        function getRandomItem(array) {
+            return array[Math.floor(Math.random() * array.length)];
+        }
+
+        function getMealOptions(dayType, mealType) {
+            if (mealConfigsByDayType[dayType] && mealConfigsByDayType[dayType][mealType]) {
+                return mealConfigsByDayType[dayType][mealType];
+            }
+            return mealConfigsByDayType.riposo[mealType] || {};
+        }
+
+        function hasAsteriskProtein(mealType) {
+            const meal = meals[mealType];
+            if (!meal || !meal.proteine) return false;
+            
+            return meal.proteine.some(item => {
+                const food = nutritionDb[item.foodKey];
+                return food && food.hasAsterisk;
+            });
+        }
+
+        function getEffectiveAmount(item, mealType, category) {
+            let baseAmount = item.currentAmount || item.suggestedAmount || 1;
+            
+            if (category === 'grassi' && item.foodKey === 'olio_evo' && hasAsteriskProtein(mealType)) {
+                baseAmount = 5;
+            }
+            
+            return baseAmount;
+        }
+
+        function getVisibleMeals() {
+            const baseMeals = [
+                { key: 'colazione', title: 'Colazione', categories: ['proteine', 'latte', 'grassi'] }
+            ];
+            
+            switch (currentDayType) {
+                case 'riposo':
+                    return [
+                        ...baseMeals,
+                        { key: 'pranzo', title: 'Pranzo', categories: ['carboidrati', 'proteine', 'verdure', 'grassi'] },
+                        { key: 'spuntino_pomeriggio', title: 'Spuntino Pomeriggio', categories: ['portate'], isMultiple: true },
+                        { key: 'cena', title: 'Cena', categories: ['carboidrati', 'proteine', 'verdure', 'grassi'] }
+                    ];
+                    
+                case 'camminata_settimana':
+                    return [
+                        ...baseMeals,
+                        { key: 'pre_allenamento', title: 'Pre-Allenamento (30\' prima)', categories: ['carboidrati'] },
+                        { key: 'pranzo', title: 'Pranzo', categories: ['carboidrati', 'proteine', 'verdure', 'grassi'] },
+                        { key: 'spuntino_pomeriggio', title: 'Spuntino Pomeriggio', categories: ['portate'], isMultiple: true },
+                        { key: 'cena', title: 'Cena', categories: ['carboidrati', 'proteine', 'verdure', 'grassi'] }
+                    ];
+                    
+                case 'camminata_weekend':
+                    return [
+                        ...baseMeals,
+                        { key: 'pre_allenamento', title: 'Pre-Allenamento (30\' prima)', categories: ['carboidrati'] },
+                        { key: 'durante_allenamento', title: 'Durante l\'Uscita', categories: ['carboidrati'] },
+                        { 
+                            key: currentLunchMode === 'principale' ? 'pranzo_principale' : 'pranzo_alternativo', 
+                            title: 'Pranzo', 
+                            categories: currentLunchMode === 'principale' ? ['carboidrati', 'proteine', 'grassi'] : ['shaker', 'mix'],
+                            hasAlternative: true
+                        },
+                        { key: 'pre_cena', title: 'Pre-Cena', categories: ['portate'], isMultiple: true },
+                        { key: 'cena', title: 'Cena', categories: ['carboidrati', 'proteine', 'verdure', 'grassi'] }
+                    ];
+                    
+                default:
+                    return baseMeals;
+            }
+        }
+
+        function generateRandomMeals() {
+            const newMeals = {};
+            const allMealsForDay = getVisibleMeals().map(meal => meal.key);
+            
+            allMealsForDay.forEach(mealType => {
+                const mealOptions = getMealOptions(currentDayType, mealType);
+                newMeals[mealType] = {};
+                
+                Object.keys(mealOptions).forEach(configCategory => {
+                    const options = mealOptions[configCategory];
+                    if (options && options.length > 0) {
+                        let targetCategory = configCategory;
+                        
+                        if (configCategory === 'carboidrati_single' || configCategory === 'carboidrati_multiple') {
+                            targetCategory = 'carboidrati';
+                            
+                            if (!newMeals[mealType][targetCategory]) {
+                                const selectedOption = getRandomItem(options);
+                                newMeals[mealType][targetCategory] = [{
+                                    id: Date.now() + Math.random(),
+                                    ...selectedOption,
+                                    isMultiple: false
+                                }];
+                            }
+                        } 
+                        else if (configCategory === 'portate' && (mealType === 'spuntino_pomeriggio' || mealType === 'pre_cena')) {
+                            const numPortate = Math.floor(Math.random() * 2) + 2;
+                            const selectedPortate = [];
+                            
+                            for (let i = 0; i < numPortate; i++) {
+                                const selectedOption = getRandomItem(options);
+                                selectedPortate.push({
+                                    id: Date.now() + Math.random() + i,
+                                    ...selectedOption
+                                });
+                            }
+                            
+                            newMeals[mealType][targetCategory] = selectedPortate;
+                        }
+                        else {
+                            const selectedOption = getRandomItem(options);
+                            newMeals[mealType][targetCategory] = [{
+                                id: Date.now() + Math.random(),
+                                ...selectedOption
+                            }];
+                        }
+                    }
+                });
+                
+                if (mealType === 'pranzo' || mealType === 'cena') {
+                    const requiredCategories = ['carboidrati', 'proteine', 'verdure', 'grassi'];
+                    requiredCategories.forEach(category => {
+                        if (!newMeals[mealType][category]) {
+                            newMeals[mealType][category] = [];
+                        }
+                    });
+                }
+                
+                newMeals[mealType].custom = [];
+            });
+
+            meals = newMeals;
+            calculateTotals();
+            renderMeals();
+        }
+
+        function calculateTotals() {
+            let totalKcal = 0, totalProt = 0, totalCarb = 0, totalFat = 0;
+
+            const addNutrition = (item, mealType, category) => {
+                if (item.foodKey && nutritionDb[item.foodKey]) {
+                    const food = nutritionDb[item.foodKey];
+                    
+                    let effectiveAmount = getEffectiveAmount(item, mealType, category);
+                    
+                    let ratio;
+                    if (food.isComposite || food.fixedAmount) {
+                        ratio = effectiveAmount;
+                    } else if (food.perPiece) {
+                        ratio = (effectiveAmount * food.perPiece) / 100;
+                    } else if (food.perPortion) {
+                        ratio = (effectiveAmount * food.perPortion) / 100;
+                    } else {
+                        ratio = effectiveAmount / 100;
+                    }
+                    
+                    totalKcal += food.kcal * ratio;
+                    totalProt += food.prot * ratio;
+                    totalCarb += food.carb * ratio;
+                    totalFat += food.fat * ratio;
+                }
+            };
+
+            const visibleMeals = getVisibleMeals();
+            const mealTypesToCalculate = visibleMeals.map(meal => meal.key);
+
+            mealTypesToCalculate.forEach(mealType => {
+                const meal = meals[mealType];
+                if (meal && typeof meal === 'object') {
+                    if (mealType === 'pranzo_principale' && currentLunchMode === 'alternativo') {
+                        return;
+                    }
+                    if (mealType === 'pranzo_alternativo' && currentLunchMode === 'principale') {
+                        return;
+                    }
+                    
+                    Object.keys(meal).forEach(category => {
+                        if (category !== 'custom') {
+                            const items = meal[category] || [];
+                            if (Array.isArray(items)) {
+                                items.forEach(item => addNutrition(item, mealType, category));
+                            }
+                        }
+                    });
+                }
+            });
+
+            totals = {
+                kcal: Math.round(totalKcal),
+                carb: Math.round(totalCarb * 10) / 10,
+                prot: Math.round(totalProt * 10) / 10,
+                fat: Math.round(totalFat * 10) / 10
+            };
+            
+            updateTotalsDisplay();
+        }
+
+        function updateTotalsDisplay() {
+            const totalCal = totals.prot * 4 + totals.carb * 4 + totals.fat * 9;
+            const percentages = {
+                carb: totalCal ? Math.round((totals.carb * 4 / totalCal) * 100) : 0,
+                prot: totalCal ? Math.round((totals.prot * 4 / totalCal) * 100) : 0,
+                fat: totalCal ? Math.round((totals.fat * 9 / totalCal) * 100) : 0
+            };
+
+            document.getElementById('totalKcal').textContent = totals.kcal;
+            document.getElementById('totalCarb').textContent = totals.carb + 'g';
+            document.getElementById('totalProt').textContent = totals.prot + 'g';
+            document.getElementById('totalFat').textContent = totals.fat + 'g';
+            
+            document.getElementById('carbPerc').textContent = percentages.carb;
+            document.getElementById('protPerc').textContent = percentages.prot;
+            document.getElementById('fatPerc').textContent = percentages.fat;
+            
+            document.getElementById('progressCarb').style.width = percentages.carb + '%';
+            document.getElementById('progressProt').style.width = percentages.prot + '%';
+            document.getElementById('progressFat').style.width = percentages.fat + '%';
+        }
+
+        function createFoodItem(item, mealType, category, categoryCount) {
+            const food = nutritionDb[item.foodKey];
+            if (!food) return '';
+
+            let currentAmount = item.currentAmount || item.suggestedAmount || 1;
+            let displayAmount = currentAmount;
+            
+            if (category === 'grassi' && item.foodKey === 'olio_evo' && hasAsteriskProtein(mealType)) {
+                displayAmount = 5;
+            }
+
+            const hasRange = item.minAmount && item.maxAmount && (item.minAmount !== item.maxAmount);
+            const mealOptions = getMealOptions(currentDayType, mealType);
+            let options = [];
+            
+            if (category === 'carboidrati' && (mealType === 'pranzo' || mealType === 'cena')) {
+                if (item.isMultiple) {
+                    options = mealOptions.carboidrati_multiple || [];
+                } else {
+                    options = mealOptions.carboidrati_single || [];
+                }
+            } else {
+                options = mealOptions[category] || [];
+            }
+
+            let itemClass = 'food-item normal';
+            if (categoryCount > 1) {
+                itemClass = 'food-item multiple';
+            }
+            if (food.isComposite) {
+                itemClass = 'food-item composite';
+            }
+
+            const amountText = food.isComposite && food.displayAmount ? 
+                food.displayAmount : 
+                (food.fixedAmount ? 
+                    `${food.fixedAmount}${food.unit}` :
+                    `${displayAmount}${food.unit}`);
+
+            const asteriskNote = category === 'grassi' && item.foodKey === 'olio_evo' && hasAsteriskProtein(mealType) ?
+                '<span class="amount-note">(ridotto)</span>' : '';
+
+            const optionsHtml = options.map(option => {
+                const optionFood = nutritionDb[option.foodKey];
+                const asterisk = optionFood && optionFood.hasAsterisk ? ' (*)' : '';
+                return `<option value="${option.foodKey}" ${option.foodKey === item.foodKey ? 'selected' : ''}>${optionFood?.portion || option.foodKey}${asterisk}</option>`;
+            }).join('');
+
+            const rangeHtml = !food.isComposite && hasRange ? 
+                `<div class="food-range">${item.minAmount}-${item.maxAmount}${food.unit}</div>` : '';
+
+            return `
+                <div class="${itemClass}">
+                    <div class="food-content">
+                        <div class="food-main">
+                            <div class="food-amount">
+                                <span class="amount-text">${amountText}${asteriskNote}</span>
+                            </div>
+                            <div class="food-select">
+                                <select class="food-dropdown" onchange="changeFoodItem('${mealType}', '${category}', '${item.id}', this.value)">
+                                    ${optionsHtml}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="food-controls">
+                            <button class="food-btn btn-copy" onclick="duplicateFoodItem('${mealType}', '${category}', '${item.id}')" title="Duplica portata">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                                </svg>
+                            </button>
+                            <button class="food-btn btn-delete" onclick="removeFoodItem('${mealType}', '${category}', '${item.id}')" title="Elimina portata">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M18 6L6 18M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    ${rangeHtml}
+                </div>
+            `;
+        }
+
+        function renderMeals() {
+            const visibleMeals = getVisibleMeals();
+            const grid = document.getElementById('mealsGrid');
+            
+            grid.innerHTML = visibleMeals.map(mealInfo => {
+                const { key: mealType, title, categories, hasAlternative, isMultiple } = mealInfo;
+                const meal = meals[mealType] || {};
+
+                const toggleHtml = hasAlternative ? `
+                    <div class="toggle-group">
+                        <button class="toggle-btn ${currentLunchMode === 'principale' ? 'active' : ''}" onclick="setLunchMode('principale')">
+                            Principale
+                        </button>
+                        <button class="toggle-btn ${currentLunchMode === 'alternativo' ? 'active' : ''}" onclick="setLunchMode('alternativo')">
+                            Alternativo
+                        </button>
+                    </div>
+                ` : '';
+
+                const foodItemsHtml = categories.map(category => {
+                    const items = meal[category] || [];
+                    return items.map(item => createFoodItem(item, mealType, category, items.length)).join('');
+                }).join('');
+
+                const addPortataBtn = isMultiple ? `
+                    <button class="add-food-btn" onclick="addPortata('${mealType}')">+ Portata</button>
+                ` : '';
+
+                const noteHtml = hasAsteriskProtein(mealType) ? 
+                    '<p class="meal-note note-orange">(*) Olio ridotto a 5g per bilanciare pesce grasso</p>' : '';
+
+                const specialNoteHtml = mealType === 'durante_allenamento' ? 
+                    '<p class="meal-note note-blue">Es: 1 marmellatina + mezza borraccia hydrafit nella prima metà, stesso nella seconda</p>' : '';
+
+                const multipleNoteHtml = isMultiple ? 
+                    '<p class="meal-note note-blue">2-3 portate a scelta (anche uguali)</p>' : '';
+
+                return `
+                    <div class="meal-card">
+                        <div class="meal-header">
+                            <div class="meal-title-area">
+                                <h3 class="meal-title">${title}</h3>
+                                ${toggleHtml}
+                            </div>
+                            <div class="meal-controls">
+                                <button class="control-btn shuffle-btn" onclick="generateRandomMeals()" title="Genera pasto casuale">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M8 4L3 21"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        ${foodItemsHtml}
+
+                        <div class="meal-footer">
+                            <div class="meal-totals">
+                                <span>--</span>
+                            </div>
+                            ${addPortataBtn}
+                        </div>
+                        
+                        ${noteHtml}
+                        ${specialNoteHtml}
+                        ${multipleNoteHtml}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Funzioni di interazione
+        function setDayType(dayType) {
+            currentDayType = dayType;
+            
+            // Aggiorna i bottoni
+            document.querySelectorAll('.day-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.day === dayType);
+            });
+            
+            generateRandomMeals();
+        }
+
+        function setLunchMode(mode) {
+            currentLunchMode = mode;
+            calculateTotals();
+            renderMeals();
+        }
+
+        function changeFoodItem(mealType, category, itemId, newFoodKey) {
+            if (meals[mealType] && meals[mealType][category]) {
+                meals[mealType][category] = meals[mealType][category].map(item => {
+                    if (item.id == itemId) {
+                        return { ...item, foodKey: newFoodKey };
+                    }
+                    return item;
+                });
+                calculateTotals();
+                renderMeals();
+            }
+        }
+
+        function duplicateFoodItem(mealType, category, itemId) {
+            if (meals[mealType] && meals[mealType][category]) {
+                const originalItem = meals[mealType][category].find(item => item.id == itemId);
+                if (originalItem) {
+                    const newItem = { ...originalItem, id: Date.now() + Math.random() };
+                    meals[mealType][category].push(newItem);
+                    calculateTotals();
+                    renderMeals();
+                }
+            }
+        }
+
+        function removeFoodItem(mealType, category, itemId) {
+            if (meals[mealType] && meals[mealType][category]) {
+                meals[mealType][category] = meals[mealType][category].filter(item => item.id != itemId);
+                calculateTotals();
+                renderMeals();
+            }
+        }
+
+        function addPortata(mealType) {
+            const mealOptions = getMealOptions(currentDayType, mealType);
+            const options = mealOptions.portate || [];
+            if (options.length > 0) {
+                const selectedOption = getRandomItem(options);
+                const newItem = {
+                    id: Date.now(),
+                    ...selectedOption
+                };
+                
+                if (!meals[mealType]) meals[mealType] = {};
+                if (!meals[mealType].portate) meals[mealType].portate = [];
+                
+                meals[mealType].portate.push(newItem);
+                calculateTotals();
+                renderMeals();
+            }
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inizializza i bottoni dei giorni
+            document.querySelectorAll('.day-btn').forEach(btn => {
+                btn.addEventListener('click', () => setDayType(btn.dataset.day));
+            });
+            
+            // Genera i pasti iniziali
+            generateRandomMeals();
+        });
+    </script>
+</body>
+</html>
